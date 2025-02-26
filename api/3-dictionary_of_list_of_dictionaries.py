@@ -1,52 +1,27 @@
 #!/usr/bin/python3
-"""
-Python script that exports data in the JSON format
-"""
+"""Script to use a REST API, returns information about
+all tasks from all employees and export in JSON"""
 import json
 import requests
 
 
-def get_all_users():
-    """
-    Get the list of all users
-    """
-    url = "https://jsonplaceholder.typicode.com/users"
-    response = requests.get(url)
-    return response.json()
-
-
-def get_user_todos(user_id):
-    """
-    Get the TODO list for a given user ID
-    """
-    url = "https://jsonplaceholder.typicode.com/todos"
-    response = requests.get(url, params={"userId": user_id})
-    return response.json()
-
-
-def export_all_todos_to_json(users):
-    """
-    Export all users' TODO lists to a JSON file
-    """
-    data = {
-        user["id"]: [
-            {
-                "task": todo["title"],
-                "completed": todo["completed"],
-                "username": user["username"]
-            } for todo in get_user_todos(user["id"])
-        ] for user in users
-    }
-    with open("todo_all_employees.json", "w") as jsonfile:
-        json.dump(data, jsonfile)
-
-
-def main():
-    """
-    Main function to fetch users and their TODO lists, then export to JSON
-    """
-    users = get_all_users()
-    export_all_todos_to_json(users)
-
 if __name__ == "__main__":
-    main()
+    API_URL = "https://jsonplaceholder.typicode.com"
+
+    users = requests.get(f"{API_URL}/users").json()
+
+    dict_users_tasks = {}
+    for user in users:
+        tasks = requests.get(f"{API_URL}/users/{user['id']}/todos").json()
+
+        dict_users_tasks[user["id"]] = []
+        for task in tasks:
+            task_dict = {
+                "username": user["username"],
+                "task": task["title"],
+                "completed": task["completed"]
+            }
+            dict_users_tasks[user["id"]].append(task_dict)
+
+    with open("todo_all_employees.json", "w") as file:
+        json.dump(dict_users_tasks, file)
